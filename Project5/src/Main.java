@@ -37,7 +37,42 @@ public class Main {
              System.out.println("File not found" + e);
         }
         
-        System.out.println(table.get("user1").getPassword());
+        System.out.println(((User)table.get("user1")).getPassword());
+        
+        Scanner input = new Scanner(System.in);
+        
+        boolean login = true;
+        while(login){
+            System.out.println("Enter username:");
+            String username = input.next();
+            if(table.containsKey(username)){
+
+                int tries = 3;
+
+                while(tries > 0){
+                    System.out.println("Enter password:");
+                    String password = input.next();
+
+                    if(password.equals(((User)table.get(username)).getPassword())){
+                        if(username.equals("admin")){
+
+                        }
+                        else{
+                            MainMenu(input);
+                        }
+                        break;
+                    }
+                    tries++;
+                }
+            }
+        }
+    }
+    
+    public static void MainMenu(Scanner input){
+        boolean mainmenu = true;
+        while(mainmenu){
+            
+        }
     }
     
 }
