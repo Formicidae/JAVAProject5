@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public class User {
     private String name;
     private String password;
-    private ArrayList orders = new ArrayList();
+    public ArrayList orders = new ArrayList();
     
     public User(String n,String p){
         name = n;
