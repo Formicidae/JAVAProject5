@@ -1,6 +1,8 @@
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Hashtable;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -91,17 +93,17 @@ public class Main {
                                             if (num == 1 || num == 2 || num == 3) {
                                                 if (num == 1) {
                                                     Order newOrder = new Order();
-                                                    reserve(input, aud1,newOrder);
+                                                    reserve(input, aud1, newOrder);
                                                     ((User) table.get(username)).orders.add(newOrder);
                                                 }
                                                 if (num == 2) {
                                                     Order newOrder = new Order();
-                                                    reserve(input, aud2,newOrder);
+                                                    reserve(input, aud2, newOrder);
                                                     ((User) table.get(username)).orders.add(newOrder);
                                                 }
                                                 if (num == 3) {
                                                     Order newOrder = new Order();
-                                                    reserve(input, aud3,newOrder);
+                                                    reserve(input, aud3, newOrder);
                                                     ((User) table.get(username)).orders.add(newOrder);
                                                 }
 
@@ -136,6 +138,15 @@ public class Main {
                 }
             }
         }
+        try{
+            writeF(aud1,new File("A1.txt"));
+            writeF(aud2,new File("A2.txt"));
+            writeF(aud3,new File("A3.txt"));
+        }
+        catch(Exception ex){
+            
+        }
+        
     }
 
     public static void MainMenu() {
@@ -145,137 +156,125 @@ public class Main {
     public static void reserve(Scanner input, char[][] aud, Order order) {
         display(aud);
         boolean looping = true;
-        while(looping){
+        while (looping) {
             System.out.println("How many adult tickets");
-            if(input.hasNextInt()){
+            if (input.hasNextInt()) {
                 order.adults = input.nextInt();
                 break;
-            }
-            else{
+            } else {
                 System.out.println("Invalid input");
             }
         }
-        
+
         looping = true;
-        while(looping){
+        while (looping) {
             System.out.println("How many senior tickets");
-            if(input.hasNextInt()){
+            if (input.hasNextInt()) {
                 order.senior = input.nextInt();
                 break;
-            }
-            else{
+            } else {
                 System.out.println("Invalid input");
             }
         }
-        
+
         looping = true;
-        while(looping){
+        while (looping) {
             System.out.println("How many child tickets");
-            if(input.hasNextInt()){
+            if (input.hasNextInt()) {
                 order.child = input.nextInt();
                 break;
-            }
-            else{
+            } else {
                 System.out.println("Invalid input");
             }
         }
-        
+
         order.sum = order.child + order.senior + order.adults;
         order.rows = new int[order.sum];
         order.seats = new int[order.sum];
         order.types = new char[order.sum];
-        
-        
-        for(int i = 0; i < order.adults;i++){
+
+        for (int i = 0; i < order.adults; i++) {
             System.out.println("Enter row number");
-            while(looping){
-                if(input.hasNextInt()){
+            while (looping) {
+                if (input.hasNextInt()) {
                     order.rows[i] = input.nextInt() - 1;
                     break;
-                }
-                else{
+                } else {
                     System.out.println("Invalid input");
                 }
             }
             System.out.println("Enter seat number");
-            while(looping){
-                if(input.hasNextInt()){
+            while (looping) {
+                if (input.hasNextInt()) {
                     order.seats[i] = input.nextInt() - 1;
                     break;
-                }
-                else{
+                } else {
                     System.out.println("Invalid input");
                 }
             }
             order.types[i] = 'A';
         }
-        for(int i = 0; i < order.senior;i++){
+        for (int i = 0; i < order.senior; i++) {
             System.out.println("Enter row number");
-            while(looping){
-                if(input.hasNextInt()){
+            while (looping) {
+                if (input.hasNextInt()) {
                     order.rows[i + order.adults] = input.nextInt() - 1;
                     break;
-                }
-                else{
+                } else {
                     System.out.println("Invalid input");
                 }
             }
             System.out.println("Enter seat number");
-            while(looping){
-                if(input.hasNextInt()){
+            while (looping) {
+                if (input.hasNextInt()) {
                     order.seats[i + order.senior] = input.nextInt() - 1;
                     break;
-                }
-                else{
+                } else {
                     System.out.println("Invalid input");
                 }
             }
             order.types[i + order.senior] = 'S';
         }
-        
-        for(int i = 0; i < order.child;i++){
+
+        for (int i = 0; i < order.child; i++) {
             System.out.println("Enter row number");
-            while(looping){
-                if(input.hasNextInt()){
+            while (looping) {
+                if (input.hasNextInt()) {
                     order.rows[i + order.adults + order.senior] = input.nextInt() - 1;
                     break;
-                }
-                else{
+                } else {
                     System.out.println("Invalid input");
                 }
             }
             System.out.println("Enter seat number");
-            while(looping){
-                if(input.hasNextInt()){
+            while (looping) {
+                if (input.hasNextInt()) {
                     order.seats[i + order.senior + order.senior] = input.nextInt() - 1;
                     break;
-                }
-                else{
+                } else {
                     System.out.println("Invalid input");
                 }
             }
             order.types[i + order.senior + order.senior] = 'C';
         }
         boolean g2r = true; // good to reserve
-        for(int i = 0; i < order.sum;i++){
-            if(!available(aud, order.rows[i], order.seats[i],1)){
+        for (int i = 0; i < order.sum; i++) {
+            if (!available(aud, order.rows[i], order.seats[i], 1)) {
                 g2r = false;
                 //best avalible
-                int middleR = aud.length / 2;
-                int middleC = aud[0].length / 2;
-                bestAvalible(aud,order.sum);
-                
-                
+
+                bestAvalible(aud, order.sum, input);
+                break;
+
             }
         }
-        if(g2r){
+        if (g2r) {
             //reserves seats
-            for(int i = 0; i < order.sum;i++){
+            for (int i = 0; i < order.sum; i++) {
                 aud[order.rows[i]][order.seats[i]] = '.';
             }
             System.out.println("Seats reserved");
         }
-        
 
     }
 
@@ -319,11 +318,16 @@ public class Main {
         }
 
     }
-    
-        //Check is the requested seats are avalible
+
+    //Check is the requested seats are avalible
     public static boolean available(char[][] aud, int row, int seat, int quantity) {
         //Checks if best seat didn't find a seat
         if (seat == 999) {
+            return false;
+        }
+
+        //out of bounds
+        if (seat < 0 || row < 0) {
             return false;
         }
         //Checks if requested seats would go out of bounds
@@ -338,19 +342,60 @@ public class Main {
         }
         return true;
     }
-    
-    public static double distance(int row, int seat, int mr, int ms){
+
+    public static double distance(int row, int seat, int mr, int ms) {
         //uses standard distance formula to find distance fron point (usaully middle seat)
-        double dis = Math.sqrt(Math.pow(Math.abs((double)row - (double)mr),2) + Math.pow(Math.abs((double)seat - (double)ms),2));
-        if(row == mr){
+        double dis = Math.sqrt(Math.pow(Math.abs((double) row - (double) mr), 2) + Math.pow(Math.abs((double) seat - (double) ms), 2));
+        if (row == mr) {
             //Tie breaker
             dis -= .1;
         }
         return dis;
     }
-    
-    public static boolean bestAvalible(char[][] aud,int quan){
-        
+
+    public static boolean bestAvalible(char[][] aud, int quan, Scanner input) {
+        int middleR = aud.length / 2;
+        int middleC = aud[0].length / 2;
+        int shortestDistance = 2147483647;
+        int bestR = -1;
+        int bestC = -1;
+
+        for (int i = 0; i < aud.length; i++) {
+            for (int j = 0; j < aud[0].length; j++) {
+                if (available(aud, i, j, quan)) {
+                    if (shortestDistance > distance(i, j + (quan / 2), middleR, middleC)) {
+                        bestR = i;
+                        bestC = j;
+                    }
+                }
+            }
+        }
+        System.out.println("Seat Requested could not be reserved");
+        if (bestR != -1) {
+            System.out.println("Would you like row:" + bestR + " Seat: " + bestC + " instead ? (y/n)");
+            char yn = input.next().charAt(0);
+            if (yn == 'Y' || yn == 'y') {
+                for (int i = 0; i < quan; i++) {
+                    aud[bestR][bestC + i] = '.';
+                }
+                System.out.println("Seats reserved");
+            }
+        } else {
+            System.out.println("No seats can accommodate your party size");
+        }
         return true;
     }
+    
+        public static void writeF(char[][] aud, File file) throws IOException {
+        OutputStream f = new FileOutputStream(file);
+        for (int i = 0; i < aud.length; i++) {
+            for (int j = 0; j < aud[0].length; j++) {
+                f.write(aud[i][j]);
+            }
+            f.write('\r');
+            f.write('\n');
+
+        }
+    }
+
 }
