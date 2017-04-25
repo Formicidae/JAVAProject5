@@ -9,6 +9,7 @@
  * @author Eddie
  */
 public class Order {
+    int aud = 0;
     int adults = 0;
     int senior = 0;
     int child = 0;

@@ -8,22 +8,21 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 /**
  *
  * @author Eddie
  */
 public class Main {
 
+    static char[][][] auds;
+    
     public static void main(String[] args) {
 
+        
         char[][] aud1 = null;
         char[][] aud2 = null;
         char[][] aud3 = null;
+        char[][][] auds = {aud1,aud2,aud3};
 
         try {
             aud1 = readAud(new File("A1.txt"));
@@ -43,6 +42,8 @@ public class Main {
             System.out.println("A3.txt not found");
         }
 
+        char[][] testaud = auds[2];
+        
         // TODO code application logic here
         Hashtable table = new Hashtable();
 
@@ -93,16 +94,19 @@ public class Main {
                                             if (num == 1 || num == 2 || num == 3) {
                                                 if (num == 1) {
                                                     Order newOrder = new Order();
+                                                    newOrder.aud = 1;
                                                     reserve(input, aud1, newOrder);
                                                     ((User) table.get(username)).orders.add(newOrder);
                                                 }
                                                 if (num == 2) {
                                                     Order newOrder = new Order();
+                                                    newOrder.aud = 2;
                                                     reserve(input, aud2, newOrder);
                                                     ((User) table.get(username)).orders.add(newOrder);
                                                 }
                                                 if (num == 3) {
                                                     Order newOrder = new Order();
+                                                    newOrder.aud = 3;
                                                     reserve(input, aud3, newOrder);
                                                     ((User) table.get(username)).orders.add(newOrder);
                                                 }
@@ -114,10 +118,10 @@ public class Main {
                                         }
                                         break;
                                     case 2:
-                                        //view()
+                                        viewOrders((User) table.get(username));
                                         break;
                                     case 3:
-                                        //update()
+                                        updateOrder(input,(User) table.get(username));
                                         break;
                                     case 4:
                                         //receipt()
@@ -396,6 +400,107 @@ public class Main {
             f.write('\n');
 
         }
+    }
+        
+    public static void viewOrders(User user){
+        for(int i = 0;i < user.orders.size();i++){
+            System.out.print("Order: " + (i+1));
+            System.out.print("\tAuditorium: " + ((Order)user.orders.get(i)).aud);
+            System.out.print("\tAdult tickets: " + ((Order)user.orders.get(i)).adults);
+            System.out.print("\tSenior tickets: " + ((Order)user.orders.get(i)).senior);
+            System.out.print("\tSenior tickets: " + ((Order)user.orders.get(i)).child);
+            System.out.print("\tSeats: ");
+            for(int j = 0; j < ((Order)user.orders.get(i)).sum;j++){
+                System.out.print( "(" + ((Order)user.orders.get(i)).rows[j] + "," + ((Order)user.orders.get(i)).seats[j] + ")");         
+            }
+            System.out.println();
+        }
+    }
+    
+    public static void updateOrder(Scanner input, User user){
+        viewOrders(user);
+        System.out.println("Choose an order to update: ");
+        int order = input.nextInt() - 1;
+        boolean menu = true;
+        while(menu){
+            System.out.println("1. Add tickets to order\n" + "2. Delete tickets from order\n" + "3. Cancel Order");
+            int choice = input.nextInt();
+            switch(choice){
+                case 1:
+                    reserve(input, auds[((Order)user.orders.get(order)).aud - 1], ((Order)user.orders.get(order)));
+                    menu = false;
+                    break;
+                case 2:
+                    //delete individual seat
+                    boolean submenu = true;
+                    while(submenu){
+                        System.out.println("Which seat would you like to remove?");
+                        for(int j = 0; j < ((Order)user.orders.get(order)).sum;j++){
+                            System.out.print( (j+1) + ": " + ((Order)user.orders.get(order)).types[j] + "(" + ((Order)user.orders.get(order)).rows[j] + "," + ((Order)user.orders.get(order)).seats[j] + ")");         
+                        }
+                        System.out.println();
+                        int seat = input.nextInt() - 1;
+                        if(seat >= ((Order)user.orders.get(order)).sum){
+                            System.out.println("Invalid seat");
+                        }
+                        else{
+                            char[][] test = auds[((Order)user.orders.get(order)).aud - 1];
+                            auds[((Order)user.orders.get(order)).aud - 1][((Order)user.orders.get(order)).rows[seat]][((Order)user.orders.get(order)).seats[seat]] = '#';
+                            
+                            if(((Order)user.orders.get(order)).types[seat] == 'A'){
+                                ((Order)user.orders.get(order)).adults--;
+                            }
+                            else if(((Order)user.orders.get(order)).types[seat] == 'S'){
+                                ((Order)user.orders.get(order)).senior--;
+                            }
+                            else if(((Order)user.orders.get(order)).types[seat] == 'C'){
+                                ((Order)user.orders.get(order)).child--;
+                            }
+                            ((Order)user.orders.get(order)).sum--;
+                            
+                            if(((Order)user.orders.get(order)).sum == 0){
+                                user.orders.remove(order);
+                            }
+                            else{
+                                ((Order)user.orders.get(order)).rows = removeElement(((Order)user.orders.get(order)).rows, seat);
+                                ((Order)user.orders.get(order)).seats  = removeElement(((Order)user.orders.get(order)).seats, seat);
+                                ((Order)user.orders.get(order)).types = removeElementC(((Order)user.orders.get(order)).types, seat);
+                            }
+
+                            
+                        }
+                    }
+                    
+                    menu = false;
+                    break;
+                case 3:
+                    
+                    for(int i = 0; i < ((Order)user.orders.get(i)).sum;i++){
+                        auds[((Order)user.orders.get(order)).aud - 1][((Order)user.orders.get(order)).rows[i]][((Order)user.orders.get(order)).seats[i]] = '#';
+                    }
+                    user.orders.remove(order);
+                    menu = false;
+                    break;
+                default:
+                    System.out.println("Invalid input");
+                
+            }
+        }
+        
+    }
+    
+    public static int[] removeElement(int[] original, int element){
+        int[] n = new int[original.length - 1];
+        System.arraycopy(original, 0, n, 0, element );
+        System.arraycopy(original, element+1, n, element, original.length - element-1);
+        return n;
+    }
+    
+    public static char[] removeElementC(char[] original, int element){
+        char[] n = new char[original.length - 1];
+        System.arraycopy(original, 0, n, 0, element );
+        System.arraycopy(original, element+1, n, element, original.length - element-1);
+        return n;
     }
 
 }
