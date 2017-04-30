@@ -24,6 +24,7 @@ public class Main {
         char[][] aud3 = null;
         char[][][] auds = {aud1, aud2, aud3};
 
+        //safely opens all the files
         try {
             aud1 = readAud(new File("A1.txt"));
         } catch (IOException ex) {
@@ -42,11 +43,10 @@ public class Main {
             System.out.println("A3.txt not found");
         }
 
-        //char[][] testaud = auds[2];
-
-        // TODO code application logic here
+        //Has table for users
         Hashtable table = new Hashtable();
 
+        //opens and reads users into hashtable
         try {
             File usersF = new File("userdb.dat");
             Scanner users = new Scanner(usersF);
@@ -61,21 +61,27 @@ public class Main {
             System.out.println("File not found" + e);
         }
 
+        //creates only input scanner
         Scanner input = new Scanner(System.in);
         
+        //main menu unput loop
         boolean login = true;
         while (login) {
+            //gets user name and looks for it in table
             System.out.println("Enter username:");
             String username = input.next();
             if (table.containsKey(username)) {
 
                 int tries = 3;
 
+                //gives user 3 tries to login
                 while (tries > 0) {
                     System.out.println("Enter password:");
                     String password = input.next();
 
+                    //checks if password is correct
                     if (password.equals(((User) table.get(username)).getPassword())) {
+                        //if user is admin and pasword matches admin menu is opened
                         if (username.equals("admin")) {
                             boolean adminMenu = true;
                             while (adminMenu) {
@@ -84,8 +90,10 @@ public class Main {
                                 switch (in) {
                                     case 1:
                                         boolean audSelect = true;
+                                        //admin menu
                                         while (audSelect) {
-                                            System.out.println("1. Auditorium 1\n" + "2. Auditorium 2\n" + "3. Auditorium 3");
+                                            //displays foramted table based on input
+                                            System.out.println("0. Exit\n" + "1. Auditorium 1\n" + "2. Auditorium 2\n" + "3. Auditorium 3");
                                             int in2 = input.nextInt();
                                             switch (in2) {
                                                 case 1:
@@ -97,6 +105,9 @@ public class Main {
                                                 case 3:
                                                     display(aud3);
                                                     break;
+                                                case 0:
+                                                    audSelect = false;
+                                                    break;
                                                 default:
                                                     System.out.println("Invalid Auditorium");
                                                     break;
@@ -104,10 +115,11 @@ public class Main {
                                         }
                                         break;
                                     case 2:
-                                        //report
+                                        //formated report
                                         System.out.printf("%16s%16s%16s%16s%16s\n", "Labels", "Auditorium 1", "Auditorium 2", "Auditorium 3", "Total");
                                         int aud1open = 0;
                                         int aud1res = 0;
+                                        //sums up type of seats for each aud
                                         for (int i = 0; i < aud1.length; i++) {
                                             for (int j = 0; j < aud1[0].length; j++) {
                                                 if (aud1[i][j] == '.') {
@@ -142,6 +154,7 @@ public class Main {
                                         System.out.printf("%16s%16d%16d%16d%16d\n", "Open seats", aud1open, aud2open, aud3open, (aud1open + aud2open + aud3open));
                                         System.out.printf("%16s%16d%16d%16d%16d\n", "Open seats", aud1res, aud2res, aud3res, (aud1res + aud2res + aud3res));
 
+                                        //calculates how many of each tickets in each aud
                                         int aud1adult = 0;
                                         int aud1senior = 0;
                                         int aud1child = 0;
@@ -185,6 +198,7 @@ public class Main {
                             }
                             }else {
                             boolean mainmenu = true;
+                            //Noraml user main menu
                             while (mainmenu) {
                                 System.out.println("1. Reserve Seats\n" + "2. View Orders\n" + "3. Update Order\n" + "4. Display Receipt\n" + "5. Log Out");
                                 int in = input.nextInt();
@@ -192,6 +206,7 @@ public class Main {
                                     case 1:
                                         boolean aud = true;
                                         while (aud) {
+                                            //amesk new order and calls reserve for chossen aud
                                             System.out.println("Which auditorium\n" + "1. Auditorium 1\n" + "2. Auditorium 2\n" + "3. Auditorium 3");
                                             int num = input.nextInt();
                                             if (num == 1 || num == 2 || num == 3) {
@@ -250,6 +265,7 @@ public class Main {
                     }
                 }
             }
+        //outpus data to files for future use
             try {
                 writeF(aud1, new File("A1.txt"));
                 writeF(aud2, new File("A2.txt"));
@@ -260,8 +276,11 @@ public class Main {
 
         }
 
+    //takes care of reserving seats and the menu for it
     public static void reserve(Scanner input, char[][] aud, Order order, User user) {
         display(aud);
+        
+        //asks for how many of each ticket
         boolean looping = true;
         while (looping) {
             System.out.println("How many adult tickets");
@@ -295,11 +314,13 @@ public class Main {
             }
         }
 
+        //creates arrays in ordder object
         order.sum = order.child + order.senior + order.adults;
         order.rows = new int[order.sum];
         order.seats = new int[order.sum];
         order.types = new char[order.sum];
 
+        //promts for each seat based on seat type
         for (int i = 0; i < order.adults; i++) {
             System.out.println("Enter row number");
             while (looping) {
@@ -385,6 +406,7 @@ public class Main {
 
     }
 
+    //loops though file line by line char by char and simply adds to 2d array
     public static char[][] readAud(File fileraw) throws IOException {
         Scanner tmp = new Scanner(fileraw);
         String line = "";
@@ -465,12 +487,14 @@ public class Main {
     }
 
     public static boolean bestAvalible(char[][] aud, int quan, Scanner input, Order order, User user) {
+        //finds middle seat and sets best to max int value
         int middleR = aud.length / 2;
         int middleC = aud[0].length / 2;
         int shortestDistance = 2147483647;
         int bestR = -1;
         int bestC = -1;
 
+        //if a seat can accomadte party it's distance is checked and if its better starting seat is recorded
         for (int i = 0; i < aud.length; i++) {
             for (int j = 0; j < aud[0].length; j++) {
                 if (available(aud, i, j, quan)) {
@@ -481,6 +505,7 @@ public class Main {
                 }
             }
         }
+        //takes care of menu and reserving the seats
         System.out.println("Seat Requested could not be reserved");
         if (bestR != -1) {
             System.out.println("Would you like row:" + bestR + " Seat: " + bestC + " instead ? (y/n)");
@@ -493,13 +518,18 @@ public class Main {
                 }
                 System.out.println("Seats reserved");
             }
+            else{
+                user.orders.remove(order);
+            }
         } else {
             System.out.println("No seats can accommodate your party size");
+            //cleans up order if user can not be acomadated
             user.orders.remove(order);
         }
         return true;
     }
 
+    //writes 2d array to file
     public static void writeF(char[][] aud, File file) throws IOException {
         OutputStream f = new FileOutputStream(file);
         for (int i = 0; i < aud.length; i++) {
@@ -512,6 +542,7 @@ public class Main {
         }
     }
 
+    //displays all orders for the user
     public static void viewOrders(User user) {
         for (int i = 0; i < user.orders.size(); i++) {
             System.out.print("Order: " + (i + 1));
@@ -528,6 +559,7 @@ public class Main {
     }
 
     public static void receipt(User user) {
+        //displays and sums price of tickets
         double priceSum = 0;
         for (int i = 0; i < user.orders.size(); i++) {
             System.out.print("Order: " + (i + 1));
@@ -547,8 +579,10 @@ public class Main {
     }
 
     public static void updateOrder(Scanner input, User user, char[][] aud1,char[][] aud2, char[][] aud3) {
+        //updates order info
         char[][] aud = null;
         viewOrders(user);
+        //selects order
         System.out.println("Choose an order to update (or 0 to exit): ");
         int order = input.nextInt() - 1;
         if(order == -1){
@@ -556,6 +590,7 @@ public class Main {
         }
         boolean menu = true;
         while (menu) {
+            //sets the aud beased on the Order
             System.out.println("1. Add tickets to order\n" + "2. Delete tickets from order\n" + "3. Cancel Order");
             switch(((Order) user.orders.get(order)).aud){
                 case 1:
@@ -569,7 +604,7 @@ public class Main {
                     break;
             }
             
-            
+            //to reserve it just calls reserve on same order
             int choice = input.nextInt();
             switch (choice) {
                 case 1:
