@@ -3,11 +3,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Hashtable;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.*;
 
 /**
  *
@@ -15,14 +11,11 @@ import java.util.logging.Logger;
  */
 public class Main {
 
-    //static char[][][] auds;
-
     public static void main(String[] args) {
 
         char[][] aud1 = null;
         char[][] aud2 = null;
         char[][] aud3 = null;
-        char[][][] auds = {aud1, aud2, aud3};
 
         //safely opens all the files
         try {
@@ -201,7 +194,16 @@ public class Main {
                             //Noraml user main menu
                             while (mainmenu) {
                                 System.out.println("1. Reserve Seats\n" + "2. View Orders\n" + "3. Update Order\n" + "4. Display Receipt\n" + "5. Log Out");
-                                int in = input.nextInt();
+                                int in = 0;
+                                if(input.hasNextInt()){
+                                    in = input.nextInt();
+                                }
+                                else{
+                                    System.out.println("Invalid Input");
+                                    input.next();
+                                    continue;
+                                }
+                                
                                 switch (in) {
                                     case 1:
                                         boolean aud = true;
@@ -279,6 +281,10 @@ public class Main {
     //takes care of reserving seats and the menu for it
     public static void reserve(Scanner input, char[][] aud, Order order, User user) {
         display(aud);
+        //stored incase roll back is needed in invalid seats are added and best cant be found
+        int oldA = order.adults;
+        int oldS = order.senior;
+        int oldC = order.child;
         
         //asks for how many of each ticket
         boolean looping = true;
@@ -314,18 +320,31 @@ public class Main {
             }
         }
 
+        //stores old order incase users enters invalid seats
+        int[] tmpr = order.rows;
+        int[] tmps = order.seats;
+        char[] tmpt = order.types;
+        int offset = order.sum;
+        
         //creates arrays in ordder object
-        order.sum = order.child + order.senior + order.adults;
+        order.sum = offset + order.child + order.senior + order.adults;
         order.rows = new int[order.sum];
         order.seats = new int[order.sum];
         order.types = new char[order.sum];
+        
+        for(int i = 0; i < offset;i++){
+            order.rows[i] = tmpr[i];
+            order.seats[i] = tmps[i];
+            order.types[i] = tmpt[i];
+        }
+            
 
         //promts for each seat based on seat type
         for (int i = 0; i < order.adults; i++) {
             System.out.println("Enter row number");
             while (looping) {
                 if (input.hasNextInt()) {
-                    order.rows[i] = input.nextInt() - 1;
+                    order.rows[offset + i] = input.nextInt() - 1;
                     break;
                 } else {
                     System.out.println("Invalid input");
@@ -334,19 +353,21 @@ public class Main {
             System.out.println("Enter seat number");
             while (looping) {
                 if (input.hasNextInt()) {
-                    order.seats[i] = input.nextInt() - 1;
+                    //accounts seats previously on the order
+                    order.seats[offset + i] = input.nextInt() - 1;
                     break;
                 } else {
                     System.out.println("Invalid input");
                 }
             }
-            order.types[i] = 'A';
+            order.types[offset + i] = 'A';
         }
         for (int i = 0; i < order.senior; i++) {
             System.out.println("Enter row number");
             while (looping) {
                 if (input.hasNextInt()) {
-                    order.rows[i + order.adults] = input.nextInt() - 1;
+                    //accounts for adult seats already added and ones previously on the order
+                    order.rows[offset + i + order.adults] = input.nextInt() - 1;
                     break;
                 } else {
                     System.out.println("Invalid input");
@@ -355,20 +376,22 @@ public class Main {
             System.out.println("Enter seat number");
             while (looping) {
                 if (input.hasNextInt()) {
-                    order.seats[i + order.adults] = input.nextInt() - 1;
+                    //accounts for adult seats already added and ones previously on the order
+                    order.seats[offset + i + order.adults] = input.nextInt() - 1;
                     break;
                 } else {
                     System.out.println("Invalid input");
                 }
             }
-            order.types[i + order.adults] = 'S';
+            order.types[offset + i + order.adults] = 'S';
         }
 
         for (int i = 0; i < order.child; i++) {
             System.out.println("Enter row number");
             while (looping) {
                 if (input.hasNextInt()) {
-                    order.rows[i + order.adults + order.senior] = input.nextInt() - 1;
+                    //accounts for adult seats already added and ones previously on the order
+                    order.rows[offset + i + order.adults + order.senior] = input.nextInt() - 1;
                     break;
                 } else {
                     System.out.println("Invalid input");
@@ -377,30 +400,46 @@ public class Main {
             System.out.println("Enter seat number");
             while (looping) {
                 if (input.hasNextInt()) {
-                    order.seats[i + order.adults + order.senior] = input.nextInt() - 1;
+                    //accounts for adult seats already added and ones previously on the order
+                    order.seats[offset + i + order.adults + order.senior] = input.nextInt() - 1;
                     break;
                 } else {
                     System.out.println("Invalid input");
                 }
             }
-            order.types[i + order.adults + order.senior] = 'C';
+            order.types[offset + i + order.adults + order.senior] = 'C';
         }
         boolean g2r = true; // good to reserve
-        for (int i = 0; i < order.sum; i++) {
+        for (int i = offset; i < order.sum; i++) {
             if (!available(aud, order.rows[i], order.seats[i], 1)) {
                 g2r = false;
                 //best avalible
 
-                bestAvalible(aud, order.sum, input, order, user);
+                if(bestAvalible(aud, order.sum - offset, input, order, user)){
+                    order.adults += oldA;
+                    order.senior += oldS;
+                    order.child += oldC;
+                }
+                else{
+                    order.rows = tmpr;
+                    order.seats = tmps;
+                    order.types = tmpt;
+                    order.sum = order.rows.length;
+                }
                 break;
 
             }
         }
         if (g2r) {
             //reserves seats
-            for (int i = 0; i < order.sum; i++) {
+            for (int i = offset; i < order.sum; i++) {
                 aud[order.rows[i]][order.seats[i]] = '.';
             }
+            order.adults += oldA;
+            order.senior += oldS;
+            order.child += oldC;
+            
+            
             System.out.println("Seats reserved");
         }
 
@@ -490,7 +529,7 @@ public class Main {
         //finds middle seat and sets best to max int value
         int middleR = aud.length / 2;
         int middleC = aud[0].length / 2;
-        int shortestDistance = 2147483647;
+        double shortestDistance = 2147483647;
         int bestR = -1;
         int bestC = -1;
 
@@ -499,6 +538,7 @@ public class Main {
             for (int j = 0; j < aud[0].length; j++) {
                 if (available(aud, i, j, quan)) {
                     if (shortestDistance > distance(i, j + (quan / 2), middleR, middleC)) {
+                        shortestDistance = distance(i, j + (quan / 2), middleR, middleC);
                         bestR = i;
                         bestC = j;
                     }
@@ -508,13 +548,17 @@ public class Main {
         //takes care of menu and reserving the seats
         System.out.println("Seat Requested could not be reserved");
         if (bestR != -1) {
-            System.out.println("Would you like row:" + bestR + " Seat: " + bestC + " instead ? (y/n)");
+            System.out.println("Would you like row:" + (bestR + 1)+ " Seat: " + (bestC + 1) + " instead ? (y/n)");
             char yn = input.next().charAt(0);
             if (yn == 'Y' || yn == 'y') {
-                for (int i = 0; i < quan; i++) {
-                    aud[bestR][bestC + i] = '.';
+                //count which new seat to reserve
+                int count = 0;
+                //reserves seats and adds them to order
+                for (int i = order.sum - quan; i < order.sum; i++) {
+                    aud[bestR][bestC + count] = '.';
                     order.rows[i] = bestR;
-                    order.seats[i] = bestC + i;
+                    order.seats[i] = bestC + count;
+                    count++;
                 }
                 System.out.println("Seats reserved");
             }
@@ -524,7 +568,10 @@ public class Main {
         } else {
             System.out.println("No seats can accommodate your party size");
             //cleans up order if user can not be acomadated
-            user.orders.remove(order);
+            if(quan == order.sum){
+                user.orders.remove(order);
+            }
+            return false;
         }
         return true;
     }
@@ -552,7 +599,7 @@ public class Main {
             System.out.print("\tSenior tickets: " + ((Order) user.orders.get(i)).child);
             System.out.print("\tSeats: ");
             for (int j = 0; j < ((Order) user.orders.get(i)).sum; j++) {
-                System.out.print("(" + ((Order) user.orders.get(i)).rows[j] + "," + ((Order) user.orders.get(i)).seats[j] + ")");
+                System.out.print("(" + (((Order) user.orders.get(i)).rows[j] + 1) + "," + (((Order) user.orders.get(i)).seats[j] + 1) + ")");
             }
             System.out.println();
         }
@@ -629,7 +676,7 @@ public class Main {
                             System.out.println("Invalid seat");
                         } else {
                             
-                          
+                            //sets the seat to # the figures out what type it is and remove that from order
                             aud[((Order) user.orders.get(order)).rows[seat]][((Order) user.orders.get(order)).seats[seat]] = '#';
 
                             if (((Order) user.orders.get(order)).types[seat] == 'A') {
@@ -656,8 +703,8 @@ public class Main {
                     menu = false;
                     break;
                 case 3:
-
-                    for (int i = 0; i < ((Order) user.orders.get(i)).sum; i++) {
+                    //sets all seats back to # and removes from order array list
+                    for (int i = 0; i < ((Order) user.orders.get(order)).sum; i++) {
                         aud[((Order) user.orders.get(order)).rows[i]][((Order) user.orders.get(order)).seats[i]] = '#';
                     }
                     user.orders.remove(order);
@@ -671,6 +718,7 @@ public class Main {
 
     }
 
+    //helper method for remove to get rid of specfic element and resize
     public static int[] removeElement(int[] original, int element) {
         int[] n = new int[original.length - 1];
         System.arraycopy(original, 0, n, 0, element);
@@ -678,6 +726,7 @@ public class Main {
         return n;
     }
 
+    //helper method for remove to get rid of specfic element and resize
     public static char[] removeElementC(char[] original, int element) {
         char[] n = new char[original.length - 1];
         System.arraycopy(original, 0, n, 0, element);
